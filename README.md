@@ -54,6 +54,8 @@ The whole thing is built on one idea: a model's own failures are the best traini
 
 The rule that makes it work — and the thing that surprised me most — is that a failed eval only becomes training data after it's rewritten into an explicit example of the behavior you wanted. You don't fix a misbehaving model with *more* data; you fix it with the *specific* data that targets the *specific* failure, captured from the model's own evals. If there's one idea worth taking from this repo, that's it.
 
+This loop has an inference-time sibling: in [stoneytech-trinity-gvar-engine](https://github.com/StoneyTECH/stoneytech-trinity-gvar-engine), failed verifications feed their failure explanations back into the next generation pass. Same move, different destination. In context, the lesson evaporates when the session ends. In the weights, it sticks.
+
 ## Results (v1 pilot — base model `Qwen3.6-27B`)
 
 | Stage | Result |
