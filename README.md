@@ -67,6 +67,22 @@ The corrective patch was 72 rows and about 18 minutes of retraining, and the par
 ### What this doesn't prove yet
 I'll be straight about the edges: this is a validated pilot, not production. That 71/71 is specifically the v1 held-out *technique-explainer* split — broader coverage (procedure→technique disambiguation especially, plus concise cards, mitigation plans, and fake-ID rejection at scale) is still in progress, and procedure rows are the genuinely hard class. An early repetition-collapse failure (`T1590.003.003…`) got caught and patched with deterministic anti-repetition decoding. Adapters stay `experimental` until the full gates pass.
 
+## Training setup
+
+For the ML-minded, the adapter recipe (all defaults in `scripts/train_qwen_lora.py`, every one overridable):
+
+| Knob | Value |
+|---|---|
+| Method | QLoRA: 4-bit nf4 base (double-quant, bf16 compute) + LoRA adapter via PEFT and HF `Trainer` |
+| Rank / alpha / dropout | r=16, α=32, dropout 0.05 |
+| Target modules | `q_proj, k_proj, v_proj, o_proj, gate_proj, up_proj, down_proj` (full attention + MLP) |
+| Sequence length | 2048 |
+| Batch | 1 × grad-accum 8 (effective 8), lr 2e-4, bf16, gradient checkpointing |
+| Patch training | resumes the existing adapter (`--resume-adapter-dir`) and trains only on the corrective rows |
+| DoRA | available behind `--use-dora` for like-for-like comparison against the same eval gates |
+
+The base model here was `Qwen3.6-27B`, trained locally on a single GB10 (128 GB unified memory). Nothing is tied to that choice: the trainer takes any causal HF model, which is the point. The patch method is the portable part.
+
 ## Run it
 
 ```bash
