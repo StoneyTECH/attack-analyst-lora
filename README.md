@@ -50,7 +50,7 @@ The whole thing is built on one idea: a model's own failures are the best traini
 4. **Evaluate for discipline, not recall** — is the evidence cited, the boundary held, the fake ID refused, the answer concise?
 5. **Repair** — take whatever failed, turn it into targeted corrective examples, retrain, and run the same gate again to confirm the behavior actually moved.
 
-The rule that makes it work: a failed eval only becomes training data after it's been rewritten into an explicit example of the behavior you wanted. You're not adding *more* data — you're adding the specific data that fixes the specific failure.
+The rule that makes it work — and the thing that surprised me most — is that a failed eval only becomes training data after it's rewritten into an explicit example of the behavior you wanted. You don't fix a misbehaving model with *more* data; you fix it with the *specific* data that targets the *specific* failure, captured from the model's own evals. If there's one idea worth taking from this repo, that's it.
 
 ## Results (v1 pilot — base model `Qwen3.6-27B`)
 
