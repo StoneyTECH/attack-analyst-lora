@@ -1,6 +1,8 @@
-# attack-analyst-lora
+# discipline-patch
 
-Teaching an LLM to **investigate like a disciplined SOC analyst** over [MITRE ATT&CK®](https://attack.mitre.org/) — via QLoRA fine-tuning, hard-negative refusal training, and a failure-driven eval → repair loop.
+**Fix the behavior, not the knowledge.** This repo demonstrates a technique I call the **Discipline Patch**: when a fine-tuned LLM misbehaves, don't reach for more training data. Rewrite the model's own *failed evals* into corrective examples of the behavior you wanted, and retrain on just those.
+
+The demonstration domain is security investigation: teaching an LLM to investigate like a disciplined SOC analyst over [MITRE ATT&CK®](https://attack.mitre.org/), via QLoRA fine-tuning, hard-negative refusal training, and a failure-driven eval and repair loop.
 
 This is a research lab, not a product. The interesting problem here isn't teaching a model the ATT&CK framework — a base model already knows it. The hard part is teaching it to *behave* like a careful analyst: to map an observation to a technique and then say what evidence is still missing, to keep what the data shows separate from what it doesn't (no actor, attribution, or severity leaps), and to refuse a fabricated technique ID like `T9999.123` instead of inventing a confident answer. None of that is knowledge — it's behavior, and it's the whole reason a model like this is useful rather than just impressive. What the repo really demonstrates is a repeatable way to measure that behavior and improve it.
 
