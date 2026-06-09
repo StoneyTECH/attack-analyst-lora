@@ -2,14 +2,7 @@
 
 Teaching an LLM to **investigate like a disciplined SOC analyst** over [MITRE ATT&CK®](https://attack.mitre.org/) — via QLoRA fine-tuning, hard-negative refusal training, and a failure-driven eval → repair loop.
 
-This is a research lab, not a product. It fine-tunes an open model to:
-
-- map observations to **ATT&CK technique IDs**, and call out the **evidence still needed**;
-- **separate evidence from inference** — no actor / attribution / severity leaps;
-- **refuse fabricated technique IDs** (e.g. `T9999.123`);
-- answer in a concise, evaluable analyst format.
-
-The point isn't fact recall — base models can already recite ATT&CK. The point is **analyst discipline**, and a **repeatable process** to measure and improve it.
+This is a research lab, not a product. The interesting problem here isn't teaching a model the ATT&CK framework — a base model already knows it. The hard part is teaching it to *behave* like a careful analyst: to map an observation to a technique and then say what evidence is still missing, to keep what the data shows separate from what it doesn't (no actor, attribution, or severity leaps), and to refuse a fabricated technique ID like `T9999.123` instead of inventing a confident answer. None of that is knowledge — it's behavior, and it's the whole reason a model like this is useful rather than just impressive. What the repo really demonstrates is a repeatable way to measure that behavior and improve it.
 
 ## A worked example: refusing a weak mapping
 
@@ -47,15 +40,17 @@ eval/
   analyze_mitre_eval_failures.py# failure taxonomy over an eval run
 ```
 
-## The method — a closed improvement loop
+## How it works
 
-1. **Build** SFT data deterministically from the **public MITRE ATT&CK enterprise STIX bundle** — six row-types per technique, plus **fake-ID rejection** rows (hard negatives the model must refuse).
-2. **Gate** every training row through a deterministic arbiter (provenance, format, no fabricated IDs).
+The whole thing is built on one idea: a model's own failures are the best training data you have, as long as you capture them cleanly. So it runs as a loop, not a one-shot job —
+
+1. **Build** SFT data deterministically from the public MITRE ATT&CK enterprise STIX bundle — six row-types per technique, plus fake-ID rejection rows the model has to refuse.
+2. **Gate** every row through a deterministic quality check (provenance, format, no fabricated IDs) before it's allowed near training.
 3. **Train** a QLoRA adapter (4-bit, PEFT + HF `Trainer`).
-4. **Evaluate for discipline, not recall** — evidence cited, boundaries respected, fake IDs refused, concise format.
-5. **Repair** — convert the *failed* eval rows into a targeted "discipline patch" dataset, retrain, and re-run the **same gate** to confirm the behavior actually improved.
+4. **Evaluate for discipline, not recall** — is the evidence cited, the boundary held, the fake ID refused, the answer concise?
+5. **Repair** — take whatever failed, turn it into targeted corrective examples, retrain, and run the same gate again to confirm the behavior actually moved.
 
-The core idea: **failed evals become training data only after they're converted into explicit analyst-discipline examples.** Model improvement is treated as an engineering loop, not a one-time training event.
+The rule that makes it work: a failed eval only becomes training data after it's been rewritten into an explicit example of the behavior you wanted. You're not adding *more* data — you're adding the specific data that fixes the specific failure.
 
 ## Results (v1 pilot — base model `Qwen3.6-27B`)
 
@@ -65,10 +60,10 @@ The core idea: **failed evals become training data only after they're converted 
 | Naive v1 adapter | 1 / 12 — *knew the mappings, failed analyst discipline* |
 | After corrective **discipline patch** | **12 / 12** smoke (avg 0.969) → **71 / 71** on the v1 held-out *technique-explainer* eval split (avg 0.972) |
 
-The corrective patch was 72 rows and ~18 minutes of retraining. It made answers shorter, more structured, and reliable — most passed at a **256-token** budget.
+The corrective patch was 72 rows and about 18 minutes of retraining, and the part I found most telling is that the fixed answers got *shorter* and more structured, not longer — the discipline made the model more economical, not more verbose. Most passed at a 256-token budget.
 
-### Honest limits
-This is a **validated pilot, not production.** The 71/71 figure is specifically the v1 held-out *technique-explainer* split. Expanded v2 coverage (procedure→technique disambiguation, concise cards, mitigation plans, fake-ID rejection at scale) is **still in progress** — procedure rows are the hard class, and an early repetition-collapse failure (`T1590.003.003…`) was caught and mitigated with deterministic anti-repetition decoding (`repetition_penalty`, `no_repeat_ngram_size`). Adapters stay `experimental` / `candidate` until full eval gates pass.
+### What this doesn't prove yet
+I'll be straight about the edges: this is a validated pilot, not production. That 71/71 is specifically the v1 held-out *technique-explainer* split — broader coverage (procedure→technique disambiguation especially, plus concise cards, mitigation plans, and fake-ID rejection at scale) is still in progress, and procedure rows are the genuinely hard class. An early repetition-collapse failure (`T1590.003.003…`) got caught and patched with deterministic anti-repetition decoding. Adapters stay `experimental` until the full gates pass.
 
 ## Run it
 
@@ -89,7 +84,7 @@ python eval/run_sft_coverage_suite.py  --help
 *(Flags are intentionally left to each script's `--help` — the base model is swappable and the pipeline is model-agnostic.)*
 
 ## Data & provenance
-All training data is generated **deterministically from the public MITRE ATT&CK® STIX corpus** (`enterprise-attack`). **No private, customer, or proprietary data is used anywhere in this repository.**
+Every training row is generated deterministically from the public MITRE ATT&CK® STIX corpus (`enterprise-attack`). There's no private, customer, or proprietary data anywhere in this repo — by design.
 
 ## License
 [MIT](LICENSE). MITRE ATT&CK® is a registered trademark of The MITRE Corporation; this project is independent and not affiliated with or endorsed by MITRE.
