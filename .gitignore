@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+*.egg-info/
+
+# Model / training artifacts (never commit weights or adapters)
+adapters/
+models/
+checkpoints/
+outputs/
+hf_cache/
+*.safetensors
+*.bin
+*.pt
+
+# Generated datasets & eval receipts (keep the builders, not the bulk outputs)
+data/*_sft_*.jsonl
+data/*_patch_*.jsonl
+evals/
+*.log
+
+# OS
+.DS_Store
