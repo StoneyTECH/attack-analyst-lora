@@ -11,6 +11,22 @@ This is a research lab, not a product. It fine-tunes an open model to:
 
 The point isn't fact recall — base models can already recite ATT&CK. The point is **analyst discipline**, and a **repeatable process** to measure and improve it.
 
+## A worked example: refusing a weak mapping
+
+The prompt is deliberately a trap — an everyday network event that *looks* mappable but isn't:
+
+> **Prompt:** A DHCP server shows a student laptop received an IP address at 8:02 AM. Can this alone be mapped to a MITRE ATT&CK technique?
+
+A generic model tends to reach for a mapping anyway:
+
+> This could map to Discovery — System Network Configuration Discovery — since the device obtained network configuration information.
+
+Confident, plausible, and wrong. A DHCP lease is ordinary network activity; on its own it's nothing — and mapping it to an adversary technique is the overreach that floods a SOC queue with noise. After discipline tuning, the model holds the line:
+
+> No — a DHCP lease by itself shouldn't be mapped to ATT&CK. It only shows a device joined or renewed on the network. A real mapping would need more: suspicious process execution, command-line activity, unusual DNS queries, authentication anomalies, signs of lateral movement, an endpoint alert, or a hit on known-malicious infrastructure. Treat this as context, not attack evidence.
+
+Both versions know the framework. The difference is **behavior** — refusing the weak mapping, naming the missing evidence, and keeping observation separate from inference.
+
 ## What's here
 
 ```
